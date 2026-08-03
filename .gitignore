@@ -1,12 +1,28 @@
-.vs/
+# IDE
 .idea/
+.vs/
 .vscode/
-bin/
-obj/
-artifacts/
-.local/
-*.user
 *.suo
-*.nupkg
-*.zip
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET / build output
+**/bin/
+**/obj/
+artifacts/
+build/
+TestResults/
 *.pdb
+
+# Local development and private notes
+.local/
+docs-private/
+
+# Local release output
+release/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini

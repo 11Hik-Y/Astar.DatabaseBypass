@@ -16,5 +16,5 @@ public sealed class ModMetadata : IModMetadata
     public List<string>? Incompatibilities { get; init; }
     public Dictionary<string, SemVersionRange>? ModDependencies { get; init; }
     public string? Url { get; init; }
-    public string License { get; init; } = "All Rights Reserved";
+    public string License { get; init; } = "CC-BY-NC-SA-4.0";
 }
