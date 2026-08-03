@@ -110,7 +110,7 @@ function Invoke-VirusTotalScan {
         [string]$ProxyUri,
 
         [ValidateRange(15, 300)]
-        [int]$InitialPollSeconds = 30,
+        [int]$PollIntervalSeconds = 60,
 
         [ValidateRange(5, 120)]
         [int]$MaxWaitMinutes = 25
@@ -299,25 +299,9 @@ function Invoke-VirusTotalScan {
 
     Write-Host "VirusTotal analysis id：$AnalysisId"
 
-    # 本次实际扫描约在 2～8 分钟完成。
-    # 使用逐级退避，避免每 20 秒无效查询：
-    # 30 → 60 → 90 → 120 → 180 → 300 秒，
-    # 后续保持 300 秒。
-    $QueuedDelays = @(
-        30,
-        60,
-        90,
-        120,
-        180,
-        300
-    )
-
-    $QueuedIndex = 0
-    $NextDelay = [Math]::Max(
-        $InitialPollSeconds,
-        $QueuedDelays[0]
-    )
-
+    # VirusTotal Public API currently allows four requests per minute.
+    # A fixed 60-second interval keeps polling predictable and leaves
+    # quota headroom for hash lookup and file upload requests.
     $Deadline = (Get-Date).AddMinutes(
         $MaxWaitMinutes
     )
@@ -328,10 +312,10 @@ function Invoke-VirusTotalScan {
 
     while ((Get-Date) -lt $Deadline) {
         Write-Host (
-            "等待 $NextDelay 秒后查询 VirusTotal 状态..."
+            "等待 $PollIntervalSeconds 秒后查询 VirusTotal 状态..."
         ) -ForegroundColor DarkGray
 
-        Start-Sleep -Seconds $NextDelay
+        Start-Sleep -Seconds $PollIntervalSeconds
 
         try {
             $Analysis = Invoke-RestMethod @WebCommon `
@@ -346,11 +330,9 @@ function Invoke-VirusTotalScan {
                 -ErrorRecord $_
 
             if ($StatusCode -eq 429) {
-                $NextDelay = 300
-
                 Write-Host (
-                    "VirusTotal 返回 429，" +
-                    "退避 300 秒后重试。"
+                    "VirusTotal 返回 429；继续按固定 " +
+                    "$PollIntervalSeconds 秒间隔重试。"
                 ) -ForegroundColor Yellow
 
                 continue
@@ -373,28 +355,8 @@ function Invoke-VirusTotalScan {
             break
         }
 
-        if ($Status -eq "in-progress") {
-            # 已进入分析阶段后，用 45 秒平衡速度和配额。
-            $NextDelay = 45
-            continue
-        }
-
-        if ($Status -eq "queued") {
-            if (
-                $QueuedIndex -lt
-                ($QueuedDelays.Count - 1)
-            ) {
-                $QueuedIndex++
-            }
-
-            $NextDelay = $QueuedDelays[$QueuedIndex]
-            continue
-        }
-
-        # 未知状态保守退避。
-        $NextDelay = 300
+        # queued、in-progress 和未知未完成状态全部保持固定间隔。
     }
-
     $StatsLine = ""
 
     if ($null -ne $Analysis) {
