@@ -1,0 +1,12 @@
+.vs/
+.idea/
+.vscode/
+bin/
+obj/
+artifacts/
+.local/
+*.user
+*.suo
+*.nupkg
+*.zip
+*.pdb

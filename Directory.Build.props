@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <SptInstallRoot Condition="'$(SptInstallRoot)' == ''">$(SPT_INSTALL_ROOT)</SptInstallRoot>
+    <SptServerRoot Condition="'$(SptServerRoot)' == ''">$(SptInstallRoot)\SPT_Runtime</SptServerRoot>
+  </PropertyGroup>
+
+  <Target Name="ValidateSptServerReferences" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(SptInstallRoot)' == ''" Text="SptInstallRoot is empty. Pass -p:SptInstallRoot=... or set SPT_INSTALL_ROOT." />
+    <Error Condition="!Exists('$(SptServerRoot)\SPT.Server.dll')" Text="Missing $(SptServerRoot)\SPT.Server.dll. Point SptInstallRoot to a complete SPT 4.1.x installation." />
+    <Error Condition="!Exists('$(SptServerRoot)\SPTarkov.Server.Core.dll')" Text="Missing SPTarkov.Server.Core.dll." />
+    <Error Condition="!Exists('$(SptServerRoot)\SPTarkov.Reflection.dll')" Text="Missing SPTarkov.Reflection.dll." />
+  </Target>
+</Project>
