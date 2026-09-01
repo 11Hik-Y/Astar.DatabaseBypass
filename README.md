@@ -2,27 +2,33 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-A server-side mod for SPT 4.1.x that bypasses the official database hash consistency check before database import.
+A server-side mod for **SPT 4.1.x** that bypasses the official database hash consistency check before database import.
 
 ## What it does
 
-Astar.DatabaseBypass only disables SPT database hash verification for the current server process.
-
-It does **not** write, modify, or delete database files. It also does **not** write, modify, or delete player profile files.
+Astar.DatabaseBypass only disables SPT database hash verification for the current server process. It does **not** write, modify, or delete database files or player profile files.
 
 SPT still performs its normal database reading, JSON parsing, deserialization, and error handling. Invalid JSON and other database errors are not suppressed by this mod.
 
 ## Compatibility
 
-- **SPT 4.1.0:** runtime acceptance completed.
-- **SPT 4.1.x:** designed against the official 4.1.x server source line.
-- Other major SPT versions are outside the declared compatibility range.
+SPT 4.1.x performs database hash verification before import. This project builds a separate DLL/package for each exact SPT patch version so the mod metadata and referenced server assemblies match that version exactly.
+
+Validated package targets currently included in the release matrix:
+
+- SPT 4.1.0
+- SPT 4.1.1
+- SPT 4.1.2
+- SPT 4.1.3
+
+Use the ZIP whose `SPT-x.y.z` suffix exactly matches your installed SPT version.
 
 ## Installation
 
 1. Stop the SPT server.
-2. Merge the `SPT_Runtime` directory from the release archive into the SPT installation root.
-3. Start the SPT server.
+2. Choose the ZIP whose `SPT-x.y.z` suffix exactly matches your installed SPT version.
+3. Merge the `SPT_Runtime` directory from the ZIP into the SPT installation root.
+4. Start the SPT server.
 
 The installed DLL should be located at:
 
@@ -55,18 +61,11 @@ In summary:
 
 Requirements:
 
-- a complete SPT 4.1.x installation;
+- server assemblies for the exact SPT 4.1.x version being targeted;
 - .NET 10 SDK;
 - PowerShell 7.
 
-Verify local SPT references:
-
-```powershell
-.\scripts\Verify-References.ps1 `
-    -SptInstallRoot "D:\path\to\SPT"
-```
-
-Build a Release DLL:
+Build one Release DLL from a complete SPT 4.1.x installation:
 
 ```powershell
 .\scripts\Build.ps1 `
@@ -74,12 +73,15 @@ Build a Release DLL:
     -Configuration Release
 ```
 
-Create the distributable package:
+Build the exact-version 4.1.x package matrix from archived SPT ZIPs:
 
 ```powershell
-.\scripts\Publish-Release.ps1 `
-    -SptInstallRoot "D:\path\to\SPT"
+.\scripts\Package-VersionMatrix.ps1 `
+    -SptArchiveRoot "D:\path\to\SPT-version-archives" `
+    -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
+
+Packages are written to `artifacts\packages` as `Astar.DatabaseBypass_v0.1.0_SPT-4.1.x.zip` files together with SHA-256 and build-matrix manifests.
 
 ## License
 

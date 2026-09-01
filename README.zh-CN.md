@@ -2,29 +2,35 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-面向 SPT 4.1.x 的服务端 Mod，用于在数据库导入前绕过官方数据库 Hash 一致性校验。
+面向 **SPT 4.1.x** 的服务端 Mod，用于在数据库导入前绕过官方数据库 Hash 一致性校验。
 
 ## 功能
 
-Astar.DatabaseBypass 只会在当前服务端进程中关闭 SPT 数据库 Hash 校验。
-
-它**不会**写入、修改或删除数据库文件，也**不会**写入、修改或删除玩家存档文件。
+Astar.DatabaseBypass 只会在当前服务端进程中关闭 SPT 数据库 Hash 校验。它**不会**写入、修改或删除数据库文件，也不会写入、修改或删除玩家存档文件。
 
 SPT 原有的数据库读取、JSON 解析、反序列化和错误处理仍会正常执行。非法 JSON 和其他数据库错误不会被本 Mod 吞掉。
 
 ## 兼容性
 
-- **SPT 4.1.0：** 已完成运行验收。
-- **SPT 4.1.x：** 按照官方 4.1.x 服务端源码分支设计兼容。
-- 其他 SPT 主版本不在当前声明范围内。
+SPT 4.1.x 会在数据库导入前执行 Hash 校验。本项目针对每个具体的 SPT patch 版本分别编译 DLL/安装包，使 Mod 元数据和引用的服务端程序集与目标版本精确一致。
+
+当前发布矩阵已验证：
+
+- SPT 4.1.0
+- SPT 4.1.1
+- SPT 4.1.2
+- SPT 4.1.3
+
+请使用文件名中 `SPT-x.y.z` 与实际安装版本完全一致的 ZIP。
 
 ## 安装
 
 1. 关闭 SPT 服务端。
-2. 将发布压缩包中的 `SPT_Runtime` 合并到 SPT 安装根目录。
-3. 启动 SPT 服务端。
+2. 选择文件名 `SPT-x.y.z` 与当前 SPT 版本完全一致的 ZIP。
+3. 将 ZIP 内的 `SPT_Runtime` 合并到 SPT 安装根目录。
+4. 启动 SPT 服务端。
 
-安装后的 DLL 应位于：
+安装后的 DLL 位于：
 
 ```text
 SPT_Runtime\user\mods\Astar.DatabaseBypass\Astar.DatabaseBypass.dll
@@ -55,18 +61,11 @@ SPT_Runtime\user\mods\Astar.DatabaseBypass
 
 环境要求：
 
-- 完整的 SPT 4.1.x 安装；
+- 目标 SPT 4.1.x 精确版本对应的服务端程序集；
 - .NET 10 SDK；
 - PowerShell 7。
 
-验证本地 SPT 引用：
-
-```powershell
-.\scripts\Verify-References.ps1 `
-    -SptInstallRoot "D:\path\to\SPT"
-```
-
-构建 Release DLL：
+从完整 SPT 4.1.x 安装构建一个 Release DLL：
 
 ```powershell
 .\scripts\Build.ps1 `
@@ -74,12 +73,15 @@ SPT_Runtime\user\mods\Astar.DatabaseBypass
     -Configuration Release
 ```
 
-生成正式分发包：
+从 SPT 历史 ZIP 构建 4.1.x 精确版本矩阵：
 
 ```powershell
-.\scripts\Publish-Release.ps1 `
-    -SptInstallRoot "D:\path\to\SPT"
+.\scripts\Package-VersionMatrix.ps1 `
+    -SptArchiveRoot "D:\path\to\SPT-version-archives" `
+    -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
+
+产物写入 `artifacts\packages`，包含各个 `Astar.DatabaseBypass_v0.1.0_SPT-4.1.x.zip`、SHA-256 清单和构建矩阵。
 
 ## 许可证
 
