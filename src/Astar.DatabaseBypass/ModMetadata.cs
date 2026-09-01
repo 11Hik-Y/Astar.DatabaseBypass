@@ -18,7 +18,7 @@ public sealed record ModMetadata : IModMetadata
     public string Name { get; init; } = "Astar Database Bypass";
     public string Author { get; init; } = "Astar";
     public List<string>? Contributors { get; init; }
-    public SemVersion Version { get; init; } = new("0.1.0");
+    public SemVersion Version { get; init; } = new("0.1.1");
     public SemVersionRange SptVersion { get; init; } = new(SptBuildTarget.ExactVersion);
     public bool HasPrepatcher { get; init; }
     public List<string>? Incompatibilities { get; init; }

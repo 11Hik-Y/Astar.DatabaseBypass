@@ -81,7 +81,7 @@ SPT_Runtime\user\mods\Astar.DatabaseBypass
     -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
 
-产物写入 `artifacts\packages`，包含各个 `Astar.DatabaseBypass_v0.1.0_SPT-4.1.x.zip`、SHA-256 清单和构建矩阵。
+产物写入 `artifacts\packages`，包含各个 `Astar.DatabaseBypass_v0.1.1_SPT-4.1.x.zip`、SHA-256 清单和构建矩阵。
 
 ## 许可证
 

@@ -81,7 +81,7 @@ Build the exact-version 4.1.x package matrix from archived SPT ZIPs:
     -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
 
-Packages are written to `artifacts\packages` as `Astar.DatabaseBypass_v0.1.0_SPT-4.1.x.zip` files together with SHA-256 and build-matrix manifests.
+Packages are written to `artifacts\packages` as `Astar.DatabaseBypass_v0.1.1_SPT-4.1.x.zip` files together with SHA-256 and build-matrix manifests.
 
 ## License
 
