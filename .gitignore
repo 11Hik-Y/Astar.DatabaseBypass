@@ -21,6 +21,7 @@ docs-private/
 
 # Local release output
 release/
+release-assets/
 
 # OS
 .DS_Store
