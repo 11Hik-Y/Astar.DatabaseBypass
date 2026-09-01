@@ -2,18 +2,18 @@ name: Publish v0.1.1
 
 on:
   push:
-    tags:
-      - "v0.1.1"
+    branches:
+      - "release-v0.1.1"
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: github.ref == 'refs/tags/v0.1.1'
+    if: github.ref == 'refs/heads/release-v0.1.1'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout tagged release commit
+      - name: Checkout release commit
         uses: actions/checkout@v4
 
       - name: Verify release whitelist and hashes
@@ -26,17 +26,16 @@ jobs:
           test "$(find . -maxdepth 1 -type f -name '*4.0*' | wc -l)" -eq 0
 
           sha256sum -c SHA256.txt
-
           test "$(grep -c '^Statistics: malicious=0; suspicious=0;' VIRUSTOTAL.txt)" -eq 4
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release and tag
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           gh release create v0.1.1 \
-            --verify-tag \
+            --target "$GITHUB_SHA" \
             --title "Astar.DatabaseBypass v0.1.1" \
             --notes-file release-assets/v0.1.1/RELEASE_NOTES.md \
             release-assets/v0.1.1/Astar.DatabaseBypass_v0.1.1_SPT-4.1.0.zip \
