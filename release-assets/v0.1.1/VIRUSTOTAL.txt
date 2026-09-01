@@ -1,0 +1,24 @@
+File: Astar.DatabaseBypass_v0.1.1_SPT-4.1.0.zip
+SHA-256: EA5421C59AA4479DC4382CE082DB136D66F39BB9C4A64AC52CFC564476CA6AAC
+Status: completed
+Statistics: malicious=0; suspicious=0; harmless=0; undetected=67
+Report: https://www.virustotal.com/gui/file/EA5421C59AA4479DC4382CE082DB136D66F39BB9C4A64AC52CFC564476CA6AAC/detection
+
+File: Astar.DatabaseBypass_v0.1.1_SPT-4.1.1.zip
+SHA-256: C95BD875C4480C72D62CA7AAE0E7621C7013440D3E15E2B372CC29E77C0667AE
+Status: completed
+Statistics: malicious=0; suspicious=0; harmless=0; undetected=67
+Report: https://www.virustotal.com/gui/file/C95BD875C4480C72D62CA7AAE0E7621C7013440D3E15E2B372CC29E77C0667AE/detection
+
+File: Astar.DatabaseBypass_v0.1.1_SPT-4.1.2.zip
+SHA-256: DF1D26825501AE349A329357D2833F4561AA612D15BFF261DA1CD8CB36CC8FCC
+Status: completed
+Statistics: malicious=0; suspicious=0; harmless=0; undetected=66
+Report: https://www.virustotal.com/gui/file/DF1D26825501AE349A329357D2833F4561AA612D15BFF261DA1CD8CB36CC8FCC/detection
+
+File: Astar.DatabaseBypass_v0.1.1_SPT-4.1.3.zip
+SHA-256: 4E47F03616B8EFF2C3842E70DE2A618994825ED584DAC7A8A02F0F18CCB07D9F
+Status: completed
+Statistics: malicious=0; suspicious=0; harmless=0; undetected=66
+Report: https://www.virustotal.com/gui/file/4E47F03616B8EFF2C3842E70DE2A618994825ED584DAC7A8A02F0F18CCB07D9F/detection
+
