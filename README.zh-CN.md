@@ -20,6 +20,8 @@ SPT 4.1.x 会在数据库导入前执行 Hash 校验。本项目针对每个具�
 - SPT 4.1.1
 - SPT 4.1.2
 - SPT 4.1.3
+- SPT 4.1.4
+- SPT 4.1.5
 
 请使用文件名中 `SPT-x.y.z` 与实际安装版本完全一致的 ZIP。
 
@@ -73,7 +75,15 @@ SPT_Runtime\user\mods\Astar.DatabaseBypass
     -Configuration Release
 ```
 
-从 SPT 历史 ZIP 构建 4.1.x 精确版本矩阵：
+直接从包含完整 `SPT-4.1.x-*` 安装目录的多版本根目录构建 4.1.x 精确版本矩阵：
+
+```powershell
+.\scripts\Package-VersionMatrix.ps1 `
+    -SptInstallationsRoot "D:\path\to\SPT\server" `
+    -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
+```
+
+仍可继续使用 SPT 历史 ZIP 作为替代来源：
 
 ```powershell
 .\scripts\Package-VersionMatrix.ps1 `
@@ -81,7 +91,7 @@ SPT_Runtime\user\mods\Astar.DatabaseBypass
     -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
 
-产物写入 `artifacts\packages`，包含各个 `Astar.DatabaseBypass_v0.1.1_SPT-4.1.x.zip`、SHA-256 清单和构建矩阵。
+产物写入 `artifacts\packages`，包含各个 `Astar.DatabaseBypass_v0.1.2_SPT-4.1.x.zip`、SHA-256 清单和构建矩阵。
 
 ## 许可证
 

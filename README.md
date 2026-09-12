@@ -20,6 +20,8 @@ Validated package targets currently included in the release matrix:
 - SPT 4.1.1
 - SPT 4.1.2
 - SPT 4.1.3
+- SPT 4.1.4
+- SPT 4.1.5
 
 Use the ZIP whose `SPT-x.y.z` suffix exactly matches your installed SPT version.
 
@@ -73,7 +75,15 @@ Build one Release DLL from a complete SPT 4.1.x installation:
     -Configuration Release
 ```
 
-Build the exact-version 4.1.x package matrix from archived SPT ZIPs:
+Build the exact-version 4.1.x package matrix directly from a directory containing complete `SPT-4.1.x-*` installations:
+
+```powershell
+.\scripts\Package-VersionMatrix.ps1 `
+    -SptInstallationsRoot "D:\path\to\SPT\server" `
+    -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
+```
+
+Archived SPT ZIPs remain supported as an alternative source:
 
 ```powershell
 .\scripts\Package-VersionMatrix.ps1 `
@@ -81,7 +91,7 @@ Build the exact-version 4.1.x package matrix from archived SPT ZIPs:
     -DotnetCommand "D:\path\to\dotnet10\dotnet.exe"
 ```
 
-Packages are written to `artifacts\packages` as `Astar.DatabaseBypass_v0.1.1_SPT-4.1.x.zip` files together with SHA-256 and build-matrix manifests.
+Packages are written to `artifacts\packages` as `Astar.DatabaseBypass_v0.1.2_SPT-4.1.x.zip` files together with SHA-256 and build-matrix manifests.
 
 ## License
 

@@ -1,6 +1,7 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = "Archive")]
 param(
-    [Parameter(Mandatory)][string]$SptArchiveRoot,
+    [Parameter(Mandatory, ParameterSetName = "Archive")][string]$SptArchiveRoot,
+    [Parameter(Mandatory, ParameterSetName = "Installations")][string]$SptInstallationsRoot,
     [string[]]$SptVersions = @(),
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
@@ -18,11 +19,18 @@ $DisclaimerSource = Join-Path $RepoRoot "DISCLAIMER.md"
 $ReferenceCacheRoot = Join-Path $RepoRoot "artifacts\spt-refs"
 $PackageStage = Join-Path $RepoRoot "artifacts\package"
 $PackageRoot = Join-Path $RepoRoot "artifacts\packages"
-$SptArchiveRoot = [System.IO.Path]::GetFullPath($SptArchiveRoot)
 
 if (-not (Test-Path -LiteralPath $BuildScript -PathType Leaf)) { throw "未找到构建脚本：$BuildScript" }
 if (-not (Test-Path -LiteralPath $DisclaimerSource -PathType Leaf)) { throw "未找到免责声明：$DisclaimerSource" }
-if (-not (Test-Path -LiteralPath $SptArchiveRoot -PathType Container)) { throw "SPT 版本包目录不存在：$SptArchiveRoot" }
+
+if ($PSCmdlet.ParameterSetName -eq "Archive") {
+    $SptArchiveRoot = [System.IO.Path]::GetFullPath($SptArchiveRoot)
+    if (-not (Test-Path -LiteralPath $SptArchiveRoot -PathType Container)) { throw "SPT 版本包目录不存在：$SptArchiveRoot" }
+}
+else {
+    $SptInstallationsRoot = [System.IO.Path]::GetFullPath($SptInstallationsRoot)
+    if (-not (Test-Path -LiteralPath $SptInstallationsRoot -PathType Container)) { throw "SPT 多版本安装目录不存在：$SptInstallationsRoot" }
+}
 
 $ProjectText = Get-Content -LiteralPath $Project -Raw
 $VersionMatch = [regex]::Match($ProjectText, '<Version>(?<version>[^<]+)</Version>')
@@ -31,33 +39,53 @@ $ModVersion = $VersionMatch.Groups['version'].Value
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
 
-$ArchiveCandidates = @(
-    Get-ChildItem -LiteralPath $SptArchiveRoot -File -Filter "SPT-4.1.*.zip" |
-        ForEach-Object {
-            $match = [regex]::Match($_.Name, '^SPT-(?<version>4\.1\.\d+)-.+\.zip$')
-            if ($match.Success) {
-                [pscustomobject]@{
-                    VersionText = $match.Groups['version'].Value
-                    Version = [version]$match.Groups['version'].Value
-                    Archive = $_
+$SourceCandidates = @(
+    if ($PSCmdlet.ParameterSetName -eq "Archive") {
+        Get-ChildItem -LiteralPath $SptArchiveRoot -File -Filter "SPT-4.1.*.zip" |
+            ForEach-Object {
+                $match = [regex]::Match($_.Name, '^SPT-(?<version>4\.1\.\d+)-.+\.zip$')
+                if ($match.Success) {
+                    [pscustomobject]@{
+                        VersionText = $match.Groups['version'].Value
+                        Version = [version]$match.Groups['version'].Value
+                        SourceKind = "Archive"
+                        Source = $_
+                    }
                 }
             }
-        }
+    }
+    else {
+        Get-ChildItem -LiteralPath $SptInstallationsRoot -Directory -Filter "SPT-4.1.*" |
+            ForEach-Object {
+                $match = [regex]::Match($_.Name, '^SPT-(?<version>4\.1\.\d+)(?:-.+)?$')
+                if ($match.Success) {
+                    [pscustomobject]@{
+                        VersionText = $match.Groups['version'].Value
+                        Version = [version]$match.Groups['version'].Value
+                        SourceKind = "Installation"
+                        Source = $_
+                    }
+                }
+            }
+    }
 )
 
-if ($ArchiveCandidates.Count -eq 0) { throw "没有找到 SPT 4.1.x ZIP。" }
+if ($SourceCandidates.Count -eq 0) {
+    $sourceDescription = if ($PSCmdlet.ParameterSetName -eq "Archive") { "SPT 4.1.x ZIP" } else { "SPT 4.1.x 安装目录" }
+    throw "没有找到 $sourceDescription。"
+}
 
 $SelectedTargets = @(
-    $ArchiveCandidates |
+    $SourceCandidates |
         Group-Object VersionText |
         ForEach-Object {
             $selected = $_.Group |
-                Sort-Object @{ Expression = { $_.Archive.LastWriteTimeUtc }; Descending = $true }, @{ Expression = { $_.Archive.Name }; Descending = $true } |
+                Sort-Object @{ Expression = { $_.Source.LastWriteTimeUtc }; Descending = $true }, @{ Expression = { $_.Source.Name }; Descending = $true } |
                 Select-Object -First 1
 
             if ($_.Count -gt 1) {
-                $skipped = @($_.Group | Where-Object { $_.Archive.FullName -ne $selected.Archive.FullName } | ForEach-Object { $_.Archive.Name }) -join ', '
-                Write-Host "SPT $($_.Name) 存在多个归档；使用 $($selected.Archive.Name)，其余不重复产包：$skipped" -ForegroundColor Yellow
+                $skipped = @($_.Group | Where-Object { $_.Source.FullName -ne $selected.Source.FullName } | ForEach-Object { $_.Source.Name }) -join ', '
+                Write-Host "SPT $($_.Name) 存在多个候选源；使用 $($selected.Source.Name)，其余不重复产包：$skipped" -ForegroundColor Yellow
             }
 
             $selected
@@ -98,23 +126,35 @@ foreach ($target in $SelectedTargets) {
     $Framework = "net10.0"
 
     Write-Host "`n=== SPT $SptVersion / $Framework ===" -ForegroundColor Cyan
-    Write-Host "Archive: $($target.Archive.Name)"
+    Write-Host "$($target.SourceKind): $($target.Source.Name)"
     Write-Host "dotnet: $DotnetCommand"
 
     $ReferenceInstallRoot = Join-Path $ReferenceCacheRoot "SPT-$SptVersion"
     $ReferenceServerRoot = Join-Path $ReferenceInstallRoot $ServerDirectoryName
     New-Item -ItemType Directory -Path $ReferenceServerRoot -Force | Out-Null
 
-    $zip = [System.IO.Compression.ZipFile]::OpenRead($target.Archive.FullName)
-    try {
+    if ($target.SourceKind -eq "Archive") {
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($target.Source.FullName)
+        try {
+            foreach ($assemblyName in $RequiredAssemblies) {
+                $entryName = "$ServerDirectoryName/$assemblyName"
+                $entry = $zip.Entries |
+                    Where-Object { $_.FullName.Replace('\', '/') -eq $entryName } |
+                    Select-Object -First 1
+                if ($null -eq $entry) { throw "$($target.Source.Name) 缺少 $entryName" }
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, (Join-Path $ReferenceServerRoot $assemblyName), $true)
+            }
+        }
+        finally { $zip.Dispose() }
+    }
+    else {
+        $InstalledServerRoot = Join-Path $target.Source.FullName $ServerDirectoryName
         foreach ($assemblyName in $RequiredAssemblies) {
-            $entryName = "$ServerDirectoryName/$assemblyName"
-            $entry = $zip.GetEntry($entryName)
-            if ($null -eq $entry) { throw "$($target.Archive.Name) 缺少 $entryName" }
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, (Join-Path $ReferenceServerRoot $assemblyName), $true)
+            $sourceAssembly = Join-Path $InstalledServerRoot $assemblyName
+            if (-not (Test-Path -LiteralPath $sourceAssembly -PathType Leaf)) { throw "$($target.Source.Name) 缺少 $ServerDirectoryName/$assemblyName" }
+            Copy-Item -LiteralPath $sourceAssembly -Destination (Join-Path $ReferenceServerRoot $assemblyName) -Force
         }
     }
-    finally { $zip.Dispose() }
 
     $ServerDll = Join-Path $ReferenceServerRoot "SPT.Server.dll"
     $ServerAssemblyVersion = [Reflection.AssemblyName]::GetAssemblyName($ServerDll).Version
@@ -161,7 +201,8 @@ foreach ($target in $SelectedTargets) {
         SptVersion = $SptVersion
         Framework = $Framework
         Dotnet = $DotnetCommand
-        Archive = $target.Archive.Name
+        SourceKind = $target.SourceKind
+        Source = $target.Source.Name
         AssemblyVersion = $ServerAssemblyVersion.ToString()
         DllSha256 = $DllHash
         Package = $PackageName
@@ -184,7 +225,7 @@ $MatrixLines.Add("")
 foreach ($result in $Results) {
     $MatrixLines.Add("SPT $($result.SptVersion)")
     $MatrixLines.Add("  Framework: $($result.Framework)")
-    $MatrixLines.Add("  Archive: $($result.Archive)")
+    $MatrixLines.Add("  Source: [$($result.SourceKind)] $($result.Source)")
     $MatrixLines.Add("  SPT.Server AssemblyVersion: $($result.AssemblyVersion)")
     $MatrixLines.Add("  DLL SHA-256: $($result.DllSha256)")
     $MatrixLines.Add("  Package: $($result.Package)")
